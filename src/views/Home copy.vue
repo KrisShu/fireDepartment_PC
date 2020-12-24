@@ -6,7 +6,7 @@
                 <img  @click="gotolistPage" src="../assets/images/logo2.png" alt="">
             </el-col>
             <el-col class="title" :span="16">
-                <p>城市智慧消防可视化终端</p>
+                <p>城市消防预警数据可视化终端</p>
             </el-col>
             <el-col :span="4">
                 <div class="header-right">
@@ -113,17 +113,26 @@
                                 label="状态"
                                 width="100"
                             >
+                            <template slot-scope="scope">
+                                <span v-if="scope.row.hydrantState == 0">正常</span>
+                                <span v-if="scope.row.hydrantState == 1">封盖正常</span>
+                                <span v-if="scope.row.hydrantState == 2">出现流水</span>
+                                <span v-if="scope.row.hydrantState == 3">碰撞倾斜</span>
+                                <span v-if="scope.row.hydrantState == 4">闷盖旋转</span>
+                                <span v-if="scope.row.hydrantState == 5">电量不足</span>
+                                <span v-if="scope.row.hydrantState == 6">水压超限</span>
+                            </template>
                             </el-table-column>
                             <el-table-column
                                 prop="electricQuantity"
-                                label="电量"
+                                label="电量（%）"
                                 width="100"
                             >
                             </el-table-column>
                             <el-table-column
                                 prop="pressure"
-                                label="水压"
-                                width="100"
+                                label="水压（KPa）"
+                                width="110"
                             >
                             </el-table-column>
                         </el-table>
@@ -149,7 +158,7 @@
                         </div>
                         <div>
                             <p><img src="../assets/images/shebei.png" alt="">接入物联网设备</p>
-                            <p><span class="num">{{totalDeviceNumber}}</span>家</p>
+                            <p><span class="num">{{totalDeviceNumber}}</span>个</p>
                         </div>
                     </div>
                     <ul>
@@ -217,6 +226,8 @@
                     :fetch-suggestions="querySearchAsync"
                     placeholder="查询防火单位"
                     @select="handleSelect"
+                    :hide-loading="true"
+                    :trigger-on-focus= "false"
                     clearable
                 >
                 <el-button slot="append" icon="el-icon-search"></el-button>
@@ -227,13 +238,20 @@
                  <el-button @click="switch_tab('防火单位')" :type="switch_tab_type" round>防火单位</el-button>
                    
                     <div v-if="isExistNewTrueFireAlarm" class="radar2 radar"></div>
-                    <div v-else class="radar"></div>
+                    <div v-else class="radar">
+                        <div class="radar_text">
+                            <p>城市消防安全</p>
+                            <p>智能监测中......</p>
+                        </div>
+                    </div>
                  <el-button @click="switch_tab('市政消火栓')" :type="switch_tab_type2" round>市政消火栓</el-button>
             </div>
         </el-main>
 
         <baseInformation ref="baseInformation"></baseInformation>
-        <MapUnitReport ref="MapUnitReport"></MapUnitReport>
+        <!-- 智慧消防数据报告 -->
+        <MapUnitReport  ref="MapUnitReport"></MapUnitReport>
+        <!--  -->
         <base-dialog title="指标异常列表" :dialogfooter="false" ref="abnormallist">
             <baseTable
                 :columnList="abnormallist"
@@ -275,6 +293,12 @@ export default {
         return{
             areaId:this.$store.state.userInfo.areaId,
             mapObj:{},
+            map:{
+                zoom:9,
+                areaName:'',
+                fillColor:'black',
+                fillColorCount:0
+            },
             radio: '实时',
             trendArr:[
                 {
@@ -314,6 +338,7 @@ export default {
             nearhydrant_spotArray:[],
             nearhydrant_spots:[],
             nearhydrantCircle:{},
+            firehousemarker:{},
             tableData: [],
             timeSlot:0,
             IoTListPage:{
@@ -474,12 +499,18 @@ export default {
                 total:0
             },
             tableData_hydrant:[],
-
+            polygons:[],//行政区面板
            
         }
     },
     created(){
+         this.map.areaName = this.$store.state.userInfo.areaName
+        if(this.$store.state.userInfo.areaName == '成华'){
+            this.map.zoom = 13
+        }else if(this.$store.state.userInfo.areaName == '柳州'){
+            this.map.zoom = 9
 
+        }
     },
     mounted(){
         this.initmap();//初始化地图
@@ -531,7 +562,7 @@ export default {
         initmap(){
             this.mapObj = new AMap.Map('mapBox', {
                 resizeEnable: true, //自适应大小
-                zoom: 9,//初始视窗
+                zoom: this.map.zoom,//初始视窗
                 center:[this.$store.state.userInfo.lng, this.$store.state.userInfo.lat],
                 // mapStyle: 'amap://styles/blue', //设置地图的显示样式
                  layers: [
@@ -541,6 +572,8 @@ export default {
                     new AMap.TileLayer.RoadNet()
                 ],
             });
+            // let features =['bg','building','point'];
+            // this.mapObj.setFeatures(features);
             setTimeout(() => {
                 this.setarea();
                 this.makeMark(this.areaId);
@@ -560,25 +593,24 @@ export default {
                     extensions: "all",
                 })
                 // 搜索所有省/直辖市信息 
-                districtSearch.search('柳州', function(status, result) {
+                districtSearch.search(that.map.areaName, function(status, result) {
                     // 查询成功时，result即为对应的行政区信息
                     // console.log(result)
                     // 获取相关区域的边界信息
                     var bounds = result.districtList[0].boundaries
-                    var polygons = []
                     if(bounds){
                         for (var i = 0, l = bounds.length; i < l; i++) {
                             //生成行政区划polygon
                             var polygon = new AMap.Polygon({
                                 map: that.mapObj,
-                                strokeWeight: 1,
+                                strokeWeight: 4,
                                 path: bounds[i],
-                                fillOpacity: 0.4,
-                                fillColor: '',
+                                fillOpacity: 0.2,
+                                fillColor: that.map.fillColor,
                                 // strokeColor: 'white'
-                                strokeColor: 'black'
+                                strokeColor: '#ffff37'
                             })
-                            polygons.push(polygon)
+                            that.polygons.push(polygon)
                         }
                     }
                 })
@@ -594,7 +626,8 @@ export default {
                 this.fireunit_spots = res.result;
                 let icon = new AMap.Icon({
                     size: new AMap.Size(40, 50), // 图标尺寸
-                    image:require("../assets/images/start-green.png") // Icon的图像
+                    // image:require("../assets/images/start-white.png") // Icon的图像
+                    image:require("../assets/images/house.png")
                 });
                 for (let item of  this.fireunit_spots) {
                     let marker = new AMap.Marker({
@@ -670,13 +703,14 @@ export default {
             this.abnormalpage.SkipCount = 0; //切换了指标则将指标异常的列表SkipCount重置为0
             this.abnormalpage.current = 1; 
             if(this.issetZoomAndCenter){//如果为true说明重置过地图的中心和层级（显示过气泡），所以重新选择指标时要将地图恢复为原来的样子
-                this.infoWindow.close();
-                this.mapObj.setZoomAndCenter(9, [this.$store.state.userInfo.lng, this.$store.state.userInfo.lat]); //同时设置地图层级与中心点
-                if(this.nearhydrant_spotArray.length>0){//如果附近的消火栓数组有数据则表示地图添加过
+                // this.infoWindow.close();
+                // this.mapObj.setZoomAndCenter(9, [this.$store.state.userInfo.lng, this.$store.state.userInfo.lat]); //同时设置地图层级与中心点
+                // if(this.nearhydrant_spotArray.length>0){//如果附近的消火栓数组有数据则表示地图添加过
+                if(this.firehousemarker){//如果新增了firehousemarker这个点表示地图添加过1km半径的圆
                     this.mapObj.remove(this.nearhydrant_spotArray);
+                    this.mapObj.remove(this.firehousemarker);
                     this.nearhydrant_spotArray =[];
                     this.mapObj.remove(this.nearhydrantCircle)
-
                 }
             }
             
@@ -704,6 +738,15 @@ export default {
         //获取地图上的防火单位位置
         getmap_fireunit(item){
             this.GetFireUnitBaseInfo(item.fireUnitId)
+            this.mapObj.remove(this.polygons)//删除地图层上的行政区面板
+            this.map.fillColorCount =-1;//点击获取地图上的防火单位位置时需要给行政区面板的蒙层颜色次数设置为-1，因为再次出发switch_tab事件时fillColorCount就为0，就正常添加蒙层颜色
+            if(this.firehousemarker){//如果新增了firehousemarker这个点表示地图添加过1km半径的圆
+                this.mapObj.remove(this.nearhydrant_spotArray);
+                this.mapObj.remove(this.firehousemarker);
+
+                this.nearhydrant_spotArray =[];
+                this.mapObj.remove(this.nearhydrantCircle)
+            }
         },
         //查看消防通道堵塞照片
         lookalarmPhotoUrl(url){
@@ -727,8 +770,8 @@ export default {
         getMapMarkInfo(item){
             var title = '防火单位信息',
             content=[];
-            content.push(`【防火单位名称】${item.fireUnitName}`);
-            content.push(`【防火单位地址】${item.fireUnitAddress}`);
+            content.push(`【名称】${item.fireUnitName}`);
+            content.push(`【地址】${item.fireUnitAddress}`);
             this.infoWindow = new AMap.InfoWindow({  
                 isCustom: true,  //使用自定义窗体
                 content: this.createInfoWindow(title, content.join("<br/>"),item.fireUnitId,item),
@@ -779,7 +822,7 @@ export default {
                 }
             }
             span1.style.borderBottom = '1px solid rgb(91, 183, 245)'
-            span1.style.marginRight = '6px'
+            span1.style.marginRight = '30px'
             span2.style.borderBottom = '1px solid rgb(91, 183, 245)'
             reportDiv.appendChild(span1)
             reportDiv.appendChild(span2)
@@ -832,6 +875,11 @@ export default {
             });
             this.GetNearbyHygrant(item.lng,item.lat);
 
+            this.firehousemarker = new AMap.Marker({
+                position: new AMap.LngLat(item.lng,item.lat),   // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
+                icon:require('../assets/images/house-fire.png')
+            });
+            this.mapObj.add(this.firehousemarker);
             this.mapObj.add(this.nearhydrantCircle);
             this.mapObj.setZoom(15)
         },
@@ -846,7 +894,7 @@ export default {
                     image:require("../assets/images/hydrant-green.png") // Icon的图像
                 });
                 let icon2 = new AMap.Icon({
-                    size: new AMap.Size(40, 50), // 图标尺寸
+                    size: new AMap.Size(20, 30), // 图标尺寸
                     image:require("../assets/images/hydrant-red.png") // Icon的图像
                 });
                 for (let item of  this.nearhydrant_spots) {
@@ -917,6 +965,7 @@ export default {
         //模糊查询
         querySearchAsync(queryString, callback){
             if(!queryString){
+                // console.log("111111111111111111111111")
                 return
             }
             let result =[];
@@ -956,6 +1005,7 @@ export default {
         },
         //获得辖区内接入物联网设备的数量
         GetNetDeviceNumber(){
+            this.totalDeviceNumber =0;
             this.$axios.get(this.$api.GetNetDeviceNumber,{params:{areaId:this.areaId}}).then(res=>{
                 console.log("获得辖区内接入物联网设备的数量",res);
                 for(let arr of res.result.listValue){
@@ -972,7 +1022,7 @@ export default {
             this.$axios.get(this.$api.GetIoTAlarmNumber,
                 {params:{areaId:this.areaId,timeSlot:this.timeSlot}}
             ).then(res=>{
-                console.log("获得指定时间段内物联指标异常数量",res)
+                // console.log("获得指定时间段内物联指标异常数量",res)
                 this.trendArr[0].num = res.result[0].value
                 this.trendArr[1].num = res.result[1].value
                 this.trendArr[2].num = res.result[2].value
@@ -984,7 +1034,7 @@ export default {
         //获取物联指标异常的防火单位列表
         GetIoTList(){
             this.$axios.get(this.$api.GetIoTList,{params:this.IoTListPage}).then(res=>{
-                console.log("最新报警列表",res);
+                // console.log("消火栓",res);
                 if(this.isExistNewTrueFireAlarm){//如果发现存在最新火警联网报警则地图显示气泡
                         this.GetFireUnitBaseInfo(res.result.items[0].fireUnitId);
                 }
@@ -1036,11 +1086,20 @@ export default {
         },
         //选择面板  防火单位或者市政消火栓
         switch_tab(text){
+            //每触发一次switch_tab事件fillColorCount就加1，如果大于0说明触发这个事件多次则在this.setarea();时会出现蒙层颜色叠加，则大于时蒙层颜色为空
+            this.map.fillColorCount++
+            console.log(this.map.fillColorCount)
+            if(this.map.fillColorCount>0){
+                this.map.fillColor = ''
+            }
+            this.setarea();
             this.paneltext = text;
             this.radio = '实时';
             this.table_show = true;
-            this.mapObj.setZoomAndCenter(9, [this.$store.state.userInfo.lng, this.$store.state.userInfo.lat]); //同时设置地图层级与中心点
-            this.infoWindow.close();
+            this.mapObj.setZoomAndCenter(this.map.zoom, [this.$store.state.userInfo.lng, this.$store.state.userInfo.lat]); //同时设置地图层级与中心点
+            if(this.infoWindow){
+                this.infoWindow.close();
+            }
             if(text == '防火单位'){
                 this.switch_tab_type =  'primary'
                 this.switch_tab_type2 ='';
@@ -1070,7 +1129,7 @@ export default {
             let fomdatas =new FormData();
             fomdatas.append('areaId',this.areaId)
             this.$axios.post(this.$api.ExistNewTrueFireAlarm,fomdatas).then(res=>{
-                console.log("每五秒判断是否有新的真实火警",res)
+                // console.log("每五秒判断是否有新的真实火警",res)
                 this.isExistNewTrueFireAlarm = res.result
                 if(res.result){
                     this.$nextTick(()=>{
@@ -1107,21 +1166,21 @@ export default {
         //市政消火栓的
         GetHydrantNumber(){
             this.$axios.get(this.$api.GetHydrantNumber,{params:{areaId:this.areaId}}).then(res=>{
-                console.log("市政消火栓的接入数量",res);
+                // console.log("市政消火栓的接入数量",res);
                 this.totalhydrantNum = res.result
             })
         },
         //获得辖区内接入管网水压监测点的数量
         GetPressureMonitorNumber(){
             this.$axios.get(this.$api.GetPressureMonitorNumber,{params:{areaId:this.areaId}}).then(res=>{
-                console.log("市政消火栓的接入数量",res)
+                // console.log("市政消火栓的接入数量",res)
                 this.totalpiepdotNum = res.result
             })
         },
         //获得市政消火栓状态实时数量
         GetHydrantStateNumber(){
             this.$axios.get(this.$api.GetHydrantStateNumber,{params:{areaId:this.areaId}}).then(res=>{
-                console.log("市政消火栓的接入数量",res)
+                // console.log("市政消火栓的接入数量",res)
                 this.hydrant_goodnum = res.result[0].value
                 this.hydrant_badnum = res.result[1].value
             })
@@ -1129,7 +1188,7 @@ export default {
         //
         GetHydrantList(){
             this.$axios.get(this.$api.GetHydrantList,{params:this.IoTListPage_hydrant}).then(res=>{
-                console.log("GetHydrantList",res);
+                // console.log("GetHydrantList",res);
                  ({items: this.tableData_hydrant,totalCount: this.IoTListPage_hydrant.total} = res.result);
             })
         },
@@ -1137,10 +1196,11 @@ export default {
         GetHydrantList_all(){
             this.mapObj.remove(this.fireunit_spotArray);
             this.$axios.get(this.$api.GetAllHydrantList,{params:{AreaId:this.areaId}}).then(res=>{
-                console.log("GetHydrantList_all",res);
+                // console.log("GetHydrantList_all",res);
                 this.makehydrantMark(res.result)
             })
         },
+        //市政消火栓的标点
         makehydrantMark(all){
             // this.allhydrant_spots ;
             console.log("所有消火栓点位",all)
@@ -1222,6 +1282,7 @@ export default {
         background: @bgcolor;
         color: white;
         user-select: none;
+        position: relative;
         .display{
             display: flex;
             align-items: center;
@@ -1230,6 +1291,12 @@ export default {
         .el-header{
             box-sizing: border-box;
             line-height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1999;
+            background: rgba(0, 0, 0, 0.5);
+            width: 100%;
             .logo{
                 cursor: pointer;
                 text-align: left;
@@ -1300,6 +1367,7 @@ export default {
                             padding: 10px 6px;
                             line-height: 20px;
                             color: rgb(112, 112, 121);
+                            text-align: left;
                         }
                         div.info-bottom {
                             height: 0px;
@@ -1329,15 +1397,17 @@ export default {
             }
             .left_Mantle{
                 left: 0;
-                top: 70px;
+                top: 60px;
                 .left_Mantle_title{
                     display: flex;
                     align-items: center;
-                    justify-content: space-around;
+                    padding: 0px 20px;
                     p{
                         img{
                             vertical-align: middle;
+                            margin-right: 10px;
                         }
+                        margin-right: 50px;
                     }
                     .el-radio-button__inner{
                         background: #9DC3E6;
@@ -1439,12 +1509,16 @@ export default {
             }
             .right_Mantle{
                 right: 0;
-                top: 70px;
+                top: 60px;
                 width: 20%;
                 padding: 20px;
                 box-sizing: border-box;
                 .right_Mantle_total{
+                   
                     div{
+                        &:nth-child(1){
+                            margin-bottom: 50px;
+                        }
                         p{
                             text-align: left;
                             line-height: 1.5;
@@ -1498,7 +1572,7 @@ export default {
             }
             .search_fireunitName{
                 position: absolute;
-                top: 10px;
+                top: 70px;
                 left: 62%;
                 .el-input{
                     border: 1px solid white;

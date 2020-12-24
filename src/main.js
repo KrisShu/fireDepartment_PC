@@ -31,6 +31,9 @@ if(localStorage.getItem('userinfo')){
   store.commit("setUserInfo", info);
 }
 
+
+console.log("location.hostname",location.hostname)
+
 new Vue({
   router,
   store,

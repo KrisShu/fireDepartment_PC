@@ -81,6 +81,24 @@ export default {
                     ]
                 },
                 {
+                    title: "联盟区块链",
+                    icon: require("../assets/images/chain.png"),
+                    child:[
+                        {
+                            url: "organization",
+                            name: "组织"
+                        },
+                        {
+                            url: "safelog",
+                            name: "安全日志"
+                        },
+                        {
+                            url: "showdata",
+                            name: "数据查看"
+                        }
+                    ]
+                },
+                {
                     title: "市政消火栓",
                     icon: require("../assets/images/hydrant.svg"),
                     child:[

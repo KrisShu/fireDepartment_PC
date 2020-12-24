@@ -489,7 +489,6 @@ export default {
     },
     //数值刷新
     refresh(items){
-        // console.log("刷新",items)
         this.refresh_message = this.$message({
             message: '刷新数值中......',
             duration: 0,
@@ -499,7 +498,6 @@ export default {
         this.$axios.get(this.$api.GetSingleElectricDeviceData,
             {params:{electricDeviceId}}
         ).then(res=>{
-            // console.log("刷新结果",res)
             this.refresh_message.close();
             if(res.result.result){
                 this.$message({
@@ -508,7 +506,17 @@ export default {
                     showClose: true,
                     duration:3000
                 });
-            //   this.GetFireElectricDeviceList();
+                this.tableData.forEach((item,index)=>{
+                    if(item.deviceId == electricDeviceId){
+                    this.$set(this.tableList[index],'state',res.result.deviceData.state)
+                    this.$set(this.tableData[index],'l',res.result.deviceData.l)
+                    this.$set(this.tableData[index],'l1',res.result.deviceData.l1)
+                    this.$set(this.tableData[index],'l2',res.result.deviceData.l2)
+                    this.$set(this.tableData[index],'l3',res.result.deviceData.l3)
+                    this.$set(this.tableData[index],'n',res.result.deviceData.n)
+                    this.$set(this.tableData[index],'a',res.result.deviceData.a)
+                    }
+                })
             }else{
                 this.$message({
                     message: '刷新数值超时，请稍后再试',

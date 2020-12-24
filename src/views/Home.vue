@@ -8,9 +8,13 @@
             <el-col class="title" :span="16">
                 <p>城市消防预警数据可视化终端</p>
             </el-col>
-            <el-col :span="4">
+            <el-col style="display:flex; alignItems: center;" :span="4">
+                 <div class="header-right export">
+                    <img style="cursor: pointer;" @click="exportcomprehensive" src="../assets/images/exportreport.png" alt="">
+                </div>
                 <div class="header-right">
                     <span>{{$store.state.userInfo.areaName}}</span>
+                   
                     <img style="cursor: pointer;" @click="logout" src="../assets/images/top_img_04.png" alt="">
                 </div>
             </el-col>
@@ -230,7 +234,7 @@
                     :trigger-on-focus= "false"
                     clearable
                 >
-                <el-button slot="append" icon="el-icon-search"></el-button>
+                    <el-button slot="append" icon="el-icon-search"></el-button>
                 </el-autocomplete>
             </div>
             <!--  -->
@@ -251,6 +255,9 @@
         <baseInformation ref="baseInformation"></baseInformation>
         <!-- 智慧消防数据报告 -->
         <MapUnitReport  ref="MapUnitReport"></MapUnitReport>
+
+        <!-- 综合数据报告 -->
+        <comprehensiveReport ref="comprehensiveReport"></comprehensiveReport>
         <!--  -->
         <base-dialog title="指标异常列表" :dialogfooter="false" ref="abnormallist">
             <baseTable
@@ -280,6 +287,7 @@
 let moment = require('moment')
 import AMap from 'AMap'
 import MapUnitReport from '../components/MapUnitReport.vue'
+import comprehensiveReport from '../components/comprehensiveReport.vue'
 import '../assets/css/style.css'//公共重置初始化样式
 import baseInformation from '../components/baseInformation.vue'
 import basemapBot from '../components/basemapBot.vue'
@@ -287,7 +295,8 @@ export default {
     components:{
         MapUnitReport,
         baseInformation,
-        basemapBot
+        basemapBot,
+        comprehensiveReport
     },
     data(){
         return{
@@ -333,6 +342,7 @@ export default {
                 }
             ],
             trend_sign:'电',
+            // massMarks:{},//海量点的图层对象
             fireunit_spotArray:[],
             fireunit_spots:[],
             nearhydrant_spotArray:[],
@@ -343,8 +353,8 @@ export default {
             timeSlot:0,
             IoTListPage:{
                 areaId:this.$store.state.userInfo.areaId,
-                IoTType:1,
-                timeSlot:0,
+                IoTType:1,//控制物联指标类型
+                timeSlot:0,//控制物联指标的时间段
                 MaxResultCount:10,
                 SkipCount:0,
                 total:0
@@ -551,6 +561,7 @@ export default {
         }
     },
     methods:{
+
         //页面跳转到列表页面 
         gotolistPage(){
             console.log("页面跳转")
@@ -572,8 +583,6 @@ export default {
                     new AMap.TileLayer.RoadNet()
                 ],
             });
-            // let features =['bg','building','point'];
-            // this.mapObj.setFeatures(features);
             setTimeout(() => {
                 this.setarea();
                 this.makeMark(this.areaId);
@@ -619,37 +628,35 @@ export default {
         //防火单位列表标点
         makeMark(areaId){
             this.mapObj.remove(this.allhydrant_spotArray);
-            this.$axios.get(this.$api.GetFireUnitLatByArea,
+            if(this.massMarks){
+                this.massMarks.clear();//清除
+            }
+            this.$axios.get(this.$api.GetFireUnitLngLatByArea,
                 {params:{areaId}}
             ).then(res=>{
                 console.log("获取的点位",res)
                 this.fireunit_spots = res.result;
-                let icon = new AMap.Icon({
-                    size: new AMap.Size(40, 50), // 图标尺寸
-                    // image:require("../assets/images/start-white.png") // Icon的图像
-                    image:require("../assets/images/house.png")
-                });
-                for (let item of  this.fireunit_spots) {
-                    let marker = new AMap.Marker({
-                        position: new AMap.LngLat(item.lng, item.lat), // 经纬度对象，也可以是经纬度构成的一维数组[116.39, 39.9]
-                        title: item.fireunitId,
-                        offset: new AMap.Pixel(-10, -10),
-                        icon: icon
-                    });
-                    marker.item = item; // 自定义参数
-                    marker.on('click',this.getMapMarkInfo)
-                    this.fireunit_spotArray.push(marker);
+                let styleObject = {
+                    url: require("../assets/images/house.png"),//图标地址
+                    size: new AMap.Size(18,18),      // 图标大小
+                    anchor: new AMap.Pixel(5,5) // 图标显示位置偏移量，基准点为图标左上角
                 }
-                // console.log(this.fireunit_spotArray)
-                this.mapObj.add(this.fireunit_spotArray);
+                this.massMarks = new AMap.MassMarks(this.fireunit_spots,{
+                    zIndex: 111,  // 海量点图层叠加的顺序
+                    zooms: [3, 19],  // 在指定地图缩放级别范围内展示海量点图层
+                    style: styleObject,  // 设置样式对象
+                    cursor: 'pointer'//设置
+                });
+                this.massMarks.setData(this.fireunit_spots);
+
+                // 将海量点添加至地图实例
+                this.massMarks.setMap(this.mapObj);
+                
             })    
 
                
         },
-        getMapMarkInfo(){
-
-        },
-        //选择radio
+        //选择radio指标类型时间段
         radiochange(text){
             // console.log(text);
             // this.table_show =false;
@@ -695,7 +702,7 @@ export default {
                 }
             }
         },
-        //选择指标
+        //选择指标类型
         selecttarget(text,index){
             console.log("选择指标",text)
             this.trend_sign =text;
@@ -1034,7 +1041,7 @@ export default {
         //获取物联指标异常的防火单位列表
         GetIoTList(){
             this.$axios.get(this.$api.GetIoTList,{params:this.IoTListPage}).then(res=>{
-                // console.log("消火栓",res);
+                console.log("获取物联指标异常的防火单位列表111111111",res);
                 if(this.isExistNewTrueFireAlarm){//如果发现存在最新火警联网报警则地图显示气泡
                         this.GetFireUnitBaseInfo(res.result.items[0].fireUnitId);
                 }
@@ -1100,12 +1107,13 @@ export default {
             if(this.infoWindow){
                 this.infoWindow.close();
             }
-            if(text == '防火单位'){
+            if(text == '防火单位'){//当点击的是防火单位的按钮时
                 this.switch_tab_type =  'primary'
                 this.switch_tab_type2 ='';
-                this.timeSlot = 0;
-                this.trend_sign ='电';
-                this.IoTListPage.IoTType = 1;
+                this.timeSlot = 0; 
+                this.IoTListPage.timeSlot =0; //请求的指标类型时间段要为实时，参数为0
+                this.trend_sign ='电'; //请求的指标类型为“电”
+                this.IoTListPage.IoTType = 1;//请求的指标类型为“电”，参数为1
                 this.GetFireUnitNumber();
                 this.GetNetDeviceNumber();
                 this.GetIoTAlarmNumber();
@@ -1194,7 +1202,8 @@ export default {
         },
         //获取所有消火栓在地图上的点
         GetHydrantList_all(){
-            this.mapObj.remove(this.fireunit_spotArray);
+            // this.mapObj.remove(this.fireunit_spotArray);
+            this.massMarks.clear();
             this.$axios.get(this.$api.GetAllHydrantList,{params:{AreaId:this.areaId}}).then(res=>{
                 // console.log("GetHydrantList_all",res);
                 this.makehydrantMark(res.result)
@@ -1269,6 +1278,14 @@ export default {
             }).catch(() => {
                          
             });
+        },
+        //点击导出综合报告
+        exportcomprehensive(){
+            this.$refs.comprehensiveReport.show = true
+            this.$nextTick(()=>{
+                 this.$refs.comprehensiveReport.EchartsToImg();
+            })
+           
         }
     }
 }
@@ -1309,10 +1326,19 @@ export default {
             .header-right{
                 text-align: right;
                 line-height: 2;
-                padding-right: 90px;
+                padding-right: 40px;
                 cursor: pointer;
+                display: flex;
+                align-items: center;
                 img{
                     margin-left: 10px;
+                }
+
+                &.export{
+                     padding-right: 20px;
+                    img{
+                        width: 24px;
+                    }
                 }
                 
             }
@@ -1611,6 +1637,7 @@ export default {
             img{
                 width: 100%;
                 height: 100%;
+               
             }
         }
        

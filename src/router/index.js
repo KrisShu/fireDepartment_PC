@@ -89,6 +89,22 @@ Vue.use(VueRouter)
         name: "Policeincident",
         component: () => import("../views/functionPages/fireHydrtant/Policeincident.vue")
       },
+      //新增联盟区块链的菜单路径
+      {
+        path: "organization",
+        name: "organization",
+        component: () => import("../views/functionPages/blockChain/organization.vue")
+      },
+      {
+        path: "safelog",
+        name: "safelog",
+        component: () => import("../views/functionPages/blockChain/safelog.vue")
+      },
+      {
+        path: "showdata",
+        name: "showdata",
+        component: () => import("../views/functionPages/blockChain/showdata.vue")
+      },
     ]
   }
 ]

@@ -124,8 +124,23 @@
                     <span class="cursor"  v-else-if="item.prop == 'alarmPhotoUrl'">
                         <el-button @click="lookalarmPhotoUrl(scope.row[item.prop])" type="text">查看</el-button>
                     </span>
+                    <!-- 数据站的状态 -->
+                    <span :class="statusClass(scope.row[item.prop])" v-if="item.prop == 'state'&& tableName == 'managementData'">
+                        {{scope.row[item.prop] | status }}
+                    </span>
                     <!-- 时间处理 -->
                     <span v-else-if="item.prop == 'creationTime' || item.prop == 'netTime'  || item.prop == 'alarmTime'">{{scope.row[item.prop] |dealTime}}</span>
+                    <!-- 联盟区块链下的组织table -->
+                    <div v-else-if="!item.prop && tableName == 'organization'">
+                        <el-button type="text" @click="organization_OP(scope.row,'修改')">修改</el-button>
+                        <el-button type="text" @click="organization_OP(scope.row,'管理数据站')">管理数据站</el-button>
+                        <el-button type="text" @click="organization_OP(scope.row,'删除')">删除</el-button>
+                    </div>
+                    <!-- 联盟区块链下的组织下的管理数据站 -->
+                    <div v-else-if="!item.prop && tableName == 'managementData'">
+                        <el-button type="text" @click="management_OP(scope.row,'修改')">修改</el-button>
+                        <el-button type="text" @click="management_OP(scope.row,'删除')">删除</el-button>
+                    </div>
                     <div v-else-if="!item.prop">
                         <el-button @click="fireunitCard(scope.row)" type="text">防火单位熟悉卡</el-button>
                         <el-button @click="datareport(scope.row)" type="text">智慧消防数据综合报告</el-button>
@@ -414,6 +429,37 @@ export default {
         lookalarmPhotoUrl(url){
             // console.log("lookalarmPhotoUrl",url)
             this.$emit('lookalarmPhotoUrl',url)
+        },
+        //2020/12/24新增模块组织的操作方式
+        organization_OP(item,flga){
+            if(flga == '删除'){
+                this.$confirm('确定删除该数据？','删除数据',{
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(()=>{
+                    this.$emit('organization_OP',item,flga)
+                }).catch(()=>{
+
+                })
+            }else{
+                this.$emit('organization_OP',item,flga)
+            }
+        },
+        management_OP(item,flga){
+            if(flga == '删除'){
+                this.$confirm('确定删除该数据？','删除数据',{
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(()=>{
+                this.$emit('management_OP',item,flga)
+                }).catch(()=>{
+
+                })
+            }else{
+                this.$emit('management_OP',item,flga)
+            }
         }
     }
 }

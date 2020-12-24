@@ -6,8 +6,16 @@ const API = {
 
 
     //
+
+    GetFireUnitListForReport:'/api/services/app/FDBigScreen/GetFireUnitListForReport',//
+    GetFireUnitTypePieChat:'/api/services/app/FDBigScreen/GetFireUnitTypePieChat',
+    GetFireAlarmForReport:'/api/services/app/FDBigScreen/GetFireAlarmForReport',//
+    GetElecAlarmForReport:'/api/services/app/FDBigScreen/GetElecAlarmForReport',//
+    GetFireFaultForReport:'/api/services/app/FDBigScreen/GetFireFaultForReport',//
     
     GetFireUnitLatByArea:'/api/services/app/FDBigScreen/GetFireUnitLatByArea',//获取区域内防火单位列表（经纬度）
+    GetFireUnitLngLatByArea:'/api/services/app/FDBigScreen/GetFireUnitLngLatByArea',//
+    
     GetFireUnitNumber:'/api/services/app/FDBigScreen/GetFireUnitNumber',//获得辖区内接入防火单位的数量
     GetNetDeviceNumber:'/api/services/app/FDBigScreen/GetNetDeviceNumber',//获得辖区内接入物联网设备的数量
     GetIoTAlarmNumber:'/api/services/app/FDBigScreen/GetIoTAlarmNumber',//获得指定时间段内物联指标异常数量
@@ -94,6 +102,29 @@ const API = {
     GetDeptHydrantList:'/api/services/app/Hydrant/GetDeptHydrantList', //监管平台：获取市政消火栓列表
     GetDeptPressureList:'/api/services/app/Hydrant/GetDeptPressureList', //监管平台：获取市政消防管网列表
     GetDeptHydrantAlarmList:'/api/services/app/Hydrant/GetDeptHydrantAlarmList', //监管平台：获取市政消火栓警情列表
+
+
+
+    //-------------联盟区块--------------
+    GetAreasByName:'/api/services/app/Area/GetAreasByName',// 根据名称模糊查询匹配的区域
+    
+    //组织
+    AddOrganize:'/api/services/app/Block/AddOrganize',// 添加组织
+    GetOrganizeList:'/api/services/app/Block/GetOrganizeList',// 获取组织列表
+    UpdateOrganize:'/api/services/app/Block/UpdateOrganize',// 修改组织信息
+    DeleteOrganize:'/api/services/app/Block/DeleteOrganize',// 删除组织信息
+    AddOrganizeDevice:'/api/services/app/Block/AddOrganizeDevice',// 添加数据站
+    GetOrganizeDeviceList:'/api/services/app/Block/GetOrganizeDeviceList',// 获取数据站列表
+    UpdateOrganizeDevice:'/api/services/app/Block/UpdateOrganizeDevice',// 修改数据站信息
+    DeleteOrganizeDevice:'/api/services/app/Block/DeleteOrganizeDevice',// 删除数据站
+    //安全日志
+    
+    GetOrganizeForDropdown:'/api/services/app/Block/GetOrganizeForDropdown',// 在组织中输入中文，会自动模糊查询并弹出下拉选择框
+    GetBlockDeviceLogList:'/api/services/app/Block/GetBlockDeviceLogList',// 获取安全日志列表
+    
+
+    //数据查看
+    GetOrganizeVerifyResult:'/api/services/app/Block/GetOrganizeVerifyResult',// 数据站区块验证
 }
 
 export default API;
