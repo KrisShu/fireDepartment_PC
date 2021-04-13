@@ -1018,8 +1018,9 @@ export default {
                 for(let arr of res.result.listValue){
                     this.totalDeviceNumber += arr
                 }
-                // console.log() 
+               
                 this.totalDevicelistValueMax = Math.max(...res.result.listValue)
+                 console.log( this.totalDevicelistValueMax) 
                 this.totalDevicelistValue = res.result.listValue;
 
             })

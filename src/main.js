@@ -3,6 +3,9 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 
+
+import 'babel-polyfill'
+
 import "./plugins/commoncomponents"; // 引入全局注册组件
 
 import '../src/assets/css/reset.css'//公共重置初始化样式

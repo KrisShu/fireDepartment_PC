@@ -3,7 +3,7 @@ const webpack = require('webpack')
 module.exports = {
   lintOnSave: false,
   productionSourceMap: false,
-  configureWebpack:  {
+  configureWebpack:{
     externals:  {
     // 全局常量定义出，也可以是window下的实例
     'AMap':  'AMap'  // 高德地图配置

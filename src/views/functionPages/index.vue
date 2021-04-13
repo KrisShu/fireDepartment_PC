@@ -118,7 +118,9 @@ export default {
             }
             .el-scrollbar__wrap {
                 overflow-x: hidden;
-            
+                .el-scrollbar__view{
+                    height: 100%;
+                }
             }
             .el-main{
                 margin-left: 4px;

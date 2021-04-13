@@ -110,5 +110,11 @@ export default {
             text-align: left;
             margin-bottom: 20px;
         }
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        &>:nth-child(2){
+            flex: 2 0 auto;
+        }
     }
 </style>

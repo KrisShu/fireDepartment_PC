@@ -31,6 +31,7 @@ const API = {
     GetWaterAlarmist:'/api/services/app/FDBigScreen/GetWaterAlarmist',//
     GetFireAlarmist:'/api/services/app/FDBigScreen/GetFireAlarmist',
     GetDetectorBitMap:'/api/services/app/FireDevice/GetDetectorBitMap',//
+    //模糊查询
     QueryFireUnitLikeName:'/api/services/app/FireUnit/QueryFireUnitLikeName',// 查询防火单位名称(模糊查询)
 
     ExistNewTrueFireAlarm:'/api/services/app/FDBigScreen/ExistNewTrueFireAlarm',//判断是否有新的真实火警
@@ -125,6 +126,7 @@ const API = {
 
     //数据查看
     GetOrganizeVerifyResult:'/api/services/app/Block/GetOrganizeVerifyResult',// 数据站区块验证
-}
+    GetBlockDataList:'/api/services/app/Block/GetBlockDataList',// 区块链数据查询列表
+}   
 
 export default API;

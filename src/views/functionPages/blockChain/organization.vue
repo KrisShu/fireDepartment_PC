@@ -263,7 +263,7 @@ export default {
         //获取数据站列表
         GetOrganizeDeviceList(){
             this.$axios.get(this.$api.GetOrganizeDeviceList,{params:this.management_page}).then(res=>{
-                console.log("获取数据站列表",res);
+                // console.log("获取数据站列表",res);
                 ({items: this.tableData_management,totalCount: this.management_page.total} = res.result);
             })
         }
@@ -274,6 +274,12 @@ export default {
 
 <style lang="less">
 .organizationBox{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    &>:nth-child(2){
+        flex: 2 0 auto;
+    }
     &>.top{
         text-align: right;
         margin-bottom: 20px;
