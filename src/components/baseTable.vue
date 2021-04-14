@@ -125,7 +125,7 @@
                         <el-button @click="lookalarmPhotoUrl(scope.row[item.prop])" type="text">查看</el-button>
                     </span>
                     <!-- 数据站的状态 -->
-                    <span :class="statusClass(scope.row[item.prop])" v-if="item.prop == 'state'&& tableName == 'managementData'">
+                    <span :class="statusClass(scope.row[item.prop])" v-else-if="item.prop == 'state'&& tableName == 'managementData'">
                         {{scope.row[item.prop] | status }}
                     </span>
                     <!-- 时间处理 -->
